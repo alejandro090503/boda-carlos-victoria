@@ -679,15 +679,15 @@ document.addEventListener('DOMContentLoaded', () => {
   function revealInvitation() {
     prepareInvitation();
     gsap.to(envFlash, {
-      opacity: 0, duration: 2, ease: 'sine.inOut',
+      opacity: 0, duration: 3, ease: 'power1.out',
       onComplete: function () { envFlash.style.display = 'none'; }
     });
   }
 
   envVideo.addEventListener('timeupdate', function () {
-    if (!flashStarted && envVideo.duration && envVideo.currentTime >= envVideo.duration - 3) {
+    if (!flashStarted && envVideo.duration && envVideo.currentTime >= envVideo.duration - 4) {
       flashStarted = true;
-      gsap.to(envFlash, { opacity: 1, duration: 2, ease: 'sine.inOut', onComplete: revealInvitation });
+      gsap.to(envFlash, { opacity: 1, duration: 3.5, ease: 'power1.in', onComplete: revealInvitation });
     }
   });
 
