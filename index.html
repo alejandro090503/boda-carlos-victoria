@@ -685,15 +685,16 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   envVideo.addEventListener('timeupdate', function () {
-    if (!flashStarted && envVideo.duration && envVideo.currentTime >= envVideo.duration - 4) {
+    if (!flashStarted && envVideo.duration && envVideo.currentTime >= envVideo.duration - 5) {
       flashStarted = true;
-      gsap.to(envFlash, { opacity: 1, duration: 3.5, ease: 'power1.in', onComplete: revealInvitation });
+      gsap.to(envFlash, { opacity: 1, duration: 4.5, ease: 'none', onComplete: revealInvitation });
     }
   });
 
   envVideo.addEventListener('ended', function () {
-    gsap.set(envFlash, { opacity: 1 });
-    revealInvitation();
+    if (!invitationReady) {
+      gsap.to(envFlash, { opacity: 1, duration: 1.5, ease: 'none', onComplete: revealInvitation });
+    }
   });
 
   function openEnvelope() {
