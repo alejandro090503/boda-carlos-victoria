@@ -326,6 +326,22 @@ section{padding:64px 22px}
 #rsvp{background:var(--ink)}
 .rsvp-sub{text-align:center;font-size:13px;color:var(--cream);opacity:.6;line-height:1.85;margin:14px 0 32px}
 .rsvp-dl{font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--gold);font-style:italic}
+.rsvp-greeting{text-align:center;font-family:'Cormorant Garamond',serif;font-size:21px;color:var(--cream);margin-bottom:6px}
+.rsvp-passes{text-align:center;font-size:12px;color:var(--cream);opacity:.65;margin-bottom:26px}
+#rsvp-fields{display:flex;flex-direction:column;gap:10px}
+.rsvp-feedback{text-align:center;font-size:12px;line-height:1.7;margin-top:14px;color:var(--gold)}
+.qr-hint{text-align:center;font-size:12px;color:var(--cream);opacity:.6;line-height:1.8;margin:12px 0 24px}
+.qr-grid{display:flex;flex-direction:column;gap:14px;align-items:center}
+.qr-card{background:var(--ink2);border:1px solid var(--gold-dim);border-radius:10px;padding:22px 18px;text-align:center;width:100%;max-width:280px}
+.qr-card .qr-img{background:#fff;padding:10px;border-radius:8px;display:inline-block;line-height:0}
+.qr-card .qr-img canvas{display:block;width:170px;height:170px}
+.qr-name{font-family:'Cormorant Garamond',serif;font-size:19px;color:var(--gold);margin-top:14px}
+.qr-mesa{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--cream);opacity:.55;margin-top:4px}
+.qr-code-txt{font-family:'Courier New',monospace;font-size:13px;letter-spacing:2px;color:var(--cream);opacity:.6;margin-top:8px;user-select:all;-webkit-user-select:all}
+.qr-code-lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);opacity:.7;margin-top:10px}
+.qr-dl{display:inline-flex;align-items:center;gap:7px;margin-top:14px;padding:9px 20px;background:transparent;border:1px solid rgba(201,169,110,.35);border-radius:6px;color:var(--gold);font-size:11px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:background .2s}
+.qr-dl:active{background:var(--gold-dim)}
+textarea.finput{resize:vertical;min-height:96px;font-family:inherit;line-height:1.7}
 .fg{margin-bottom:22px}
 .flbl{display:block;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
 .finput{
@@ -740,10 +756,12 @@ section{padding:64px 22px}
   <div class="gline"></div>
   <p class="rsvp-sub">Confirma antes del<br><span class="rsvp-dl">12 de Septiembre de 2026</span></p>
 
+  <div id="rsvpGreeting"></div>
+
   <form id="rsvpForm" onsubmit="submitRSVP(event)" novalidate>
     <div class="fg" id="fg1">
       <label class="flbl" for="rname">Nombre completo</label>
-      <input type="text" id="rname" class="finput" placeholder="Escribe tu nombre completo" autocomplete="name" required>
+      <input type="text" id="rname" class="finput" placeholder="Escribe tu nombre completo" autocomplete="name">
     </div>
     <div class="fg" id="fg2">
       <label class="flbl">¿Asistirás?</label>
@@ -765,20 +783,29 @@ section{padding:64px 22px}
       </div>
     </div>
     <div class="fg" id="fg3" style="display:none">
-      <label class="flbl">Número de personas</label>
-      <div class="gctr">
-        <button type="button" class="gc-btn" onclick="chGuests(-1)">−</button>
-        <span class="gc-n" id="gcN">1</span>
-        <button type="button" class="gc-btn" onclick="chGuests(1)">+</button>
-      </div>
+      <label class="flbl">¿Quiénes asistirán?</label>
+      <div id="rsvp-fields"></div>
+    </div>
+    <div class="fg" id="fgMsg" style="display:none">
+      <label class="flbl" for="rmsg">Mensaje para los novios (opcional)</label>
+      <textarea id="rmsg" class="finput" rows="4" maxlength="500" placeholder="Déjales unas palabras…"></textarea>
     </div>
     <div class="fg" id="fg4">
-      <button type="submit" class="btn btn-gold">
+      <button type="submit" class="btn btn-gold" id="rsvpConfirmBtn">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-        Confirmar por WhatsApp
+        <span id="rsvp-btn-text">Confirmar asistencia</span>
       </button>
+      <p id="rsvpFeedback" class="rsvp-feedback" style="display:none"></p>
     </div>
   </form>
+
+  <!-- Códigos de acceso QR (aparecen al confirmar) -->
+  <div id="qrSection" style="display:none">
+    <div class="sdiv"></div>
+    <p class="fam-ttl">Tus códigos de acceso</p>
+    <p class="qr-hint">Presenta tu código QR el día del evento.<br>Puedes mostrarlo desde tu celular o descargarlo.</p>
+    <div class="qr-grid" id="qrGrid"></div>
+  </div>
 </section>
 
 
@@ -802,6 +829,8 @@ section{padding:64px 22px}
 <!-- GSAP -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<!-- QR codes (códigos de acceso) — 1.5.1 es la última versión con bundle UMD en el CDN -->
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
 
 <script>
 /* ── BOOT ─────────────────────────────────────────────── */
@@ -1088,46 +1117,322 @@ function toggleMusic() {
   playing = !playing;
 }
 
-/* ── RADIO → show/hide guest counter ────────────────── */
-document.querySelectorAll('input[name="att"]').forEach(r => {
-  r.addEventListener('change', e => {
-    const g = document.getElementById('fg3');
-    if (e.target.value === 'yes') {
-      g.style.display = 'block';
-      gsap.from(g, { opacity: 0, y: 10, duration: .35, ease: 'power2.out' });
-    } else {
-      g.style.display = 'none';
-    }
-  });
-});
+/* ── RSVP · INTEGRACIÓN PANEL QR (patrón estándar) ───── */
+const PANEL_API = 'https://panel-invitados-qr.vercel.app/api/confirmar';
+const RSVP_URL  = 'https://boda-carlos-victoria.vercel.app';
+const RSVP_DEADLINE = new Date(2026, 8, 12, 23, 59, 59, 999); // 12 sep 2026 (fallback)
+let rsvpDeadline = RSVP_DEADLINE;              // fecha límite efectiva (la del panel la sobrescribe)
+let rsvpActiveLabel = 'Confirmar asistencia';  // texto del botón cuando el form está abierto
+let invitacionAnulada = false;                 // true si el organizador borró esta invitación en el panel
 
-/* ── GUEST COUNTER ───────────────────────────────────── */
-let guests = 1;
-function chGuests(d) {
-  guests = Math.min(10, Math.max(1, guests + d));
-  const el = document.getElementById('gcN');
-  el.textContent = guests;
-  el.classList.add('bump');
-  setTimeout(() => el.classList.remove('bump'), 280);
+const rsvpParams = new URLSearchParams(location.search);
+const urlPara  = (rsvpParams.get('para') || '').trim();
+const rawPases = parseInt(rsvpParams.get('pases') || '1', 10);
+let pasesAsignados = (isNaN(rawPases) || rawPases < 1 || rawPases > 20) ? 1 : rawPases;
+let savedNames = [];
+let rsvpChoice = null;
+
+function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function setBtnText(t) { const el = document.getElementById('rsvp-btn-text'); if (el) el.textContent = t; }
+function showFeedback(msg, color) {
+  const f = document.getElementById('rsvpFeedback');
+  if (!f) return;
+  f.style.display = 'block';
+  f.style.color = color || 'var(--gold)';
+  f.textContent = msg;
 }
 
-/* ── RSVP SUBMIT ─────────────────────────────────────── */
-const WA = '521XXXXXXXXXX'; // ← reemplaza con tu número
+/* Fecha límite: formato es-MX largo y parseo tolerante (fin de día local) */
+function fmtDeadline(d) {
+  return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+function parseDeadline(str) {
+  if (!str) return null;
+  // Solo fecha (sin hora) → fin de día LOCAL. Un ISO completo con zona
+  // horaria se parsea tal cual (recortarlo movería el límite un día).
+  const m = String(str).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m) return new Date(+m[1], +m[2] - 1, +m[3], 23, 59, 59, 999);
+  const d = new Date(str);
+  return isNaN(d.getTime()) ? null : d;
+}
+function freezeRsvp() {
+  document.querySelectorAll('#rsvpForm input, #rsvpForm button').forEach(el => el.disabled = true);
+  setBtnText('Fecha límite alcanzada');
+}
+/* Congela o reabre el form según la fecha límite efectiva */
+function applyRsvpDeadline() {
+  if (invitacionAnulada) return; // invitación borrada: permanece bloqueada
+  if (Date.now() > rsvpDeadline.getTime()) {
+    freezeRsvp();
+  } else {
+    document.querySelectorAll('#rsvpForm input, #rsvpForm button').forEach(el => el.disabled = false);
+    setBtnText(rsvpActiveLabel);
+  }
+}
+/* La invitación fue borrada del panel: se desactiva de forma definitiva */
+function invitacionNoDisponible() {
+  invitacionAnulada = true;
+  document.querySelectorAll('#rsvpForm input, #rsvpForm button').forEach(el => el.disabled = true);
+  setBtnText('Invitación no disponible');
+  showFeedback('Esta invitación ya no está disponible. Por favor contacta a los novios.', '#e8a090');
+  const sec = document.getElementById('qrSection');
+  if (sec) sec.style.display = 'none';
+}
+/* Confirmado pero aún sin QRs: mensaje dentro del contenedor de códigos */
+function showQrsPending() {
+  const sec = document.getElementById('qrSection');
+  const grid = document.getElementById('qrGrid');
+  if (!sec || !grid) return;
+  grid.innerHTML = '';
+  const msg = document.createElement('p');
+  msg.className = 'qr-hint';
+  msg.textContent = 'Tus códigos de acceso estarán disponibles cuando se acerque el evento. Vuelve a esta página más adelante.';
+  grid.appendChild(msg);
+  sec.style.display = 'block';
+}
+
+function paintGreeting() {
+  const g = document.getElementById('rsvpGreeting');
+  if (!g || !urlPara) return;
+  g.innerHTML =
+    '<p class="rsvp-greeting">¡Hola, ' + escHtml(urlPara) + '!</p>' +
+    '<p class="rsvp-passes">Tienes <strong style="color:var(--gold)">' + pasesAsignados + '</strong> pase' + (pasesAsignados > 1 ? 's' : '') + ' asignado' + (pasesAsignados > 1 ? 's' : '') + '</p>';
+}
+
+function renderFields(n) {
+  const f = document.getElementById('rsvp-fields');
+  f.innerHTML = '';
+  for (let i = 0; i < n; i++) {
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.className = 'finput';
+    inp.placeholder = n === 1 ? 'Tu nombre completo' : 'Invitado ' + (i + 1);
+    inp.autocomplete = 'off';
+    inp.maxLength = 60;
+    inp.value = savedNames[i] || '';
+    ((idx) => inp.addEventListener('input', function(){ savedNames[idx] = this.value; }))(i);
+    f.appendChild(inp);
+  }
+}
+
+function selectRsvp(choice, animate) {
+  rsvpChoice = choice;
+  const radio = document.getElementById(choice === 'yes' ? 'rYes' : 'rNo');
+  if (radio) radio.checked = true;
+  const g = document.getElementById('fg3');
+  const m = document.getElementById('fgMsg');
+  if (choice === 'yes') {
+    renderFields(pasesAsignados);
+    g.style.display = 'block';
+    if (m) m.style.display = 'none';
+    if (animate && window.gsap) gsap.from(g, { opacity: 0, y: 10, duration: .35, ease: 'power2.out' });
+  } else {
+    g.style.display = 'none';
+    if (m) {
+      m.style.display = 'block';
+      if (animate && window.gsap) gsap.from(m, { opacity: 0, y: 10, duration: .35, ease: 'power2.out' });
+    }
+  }
+}
+
+document.querySelectorAll('input[name="att"]').forEach(r => {
+  r.addEventListener('change', e => selectRsvp(e.target.value === 'yes' ? 'yes' : 'no', true));
+});
+
+/* Pre-fill: d.pases del panel es autoritativo; guard silencioso si no hay registro */
+(function initRsvpPanel() {
+  if (urlPara) {
+    const fg1 = document.getElementById('fg1');
+    if (fg1) fg1.style.display = 'none'; // el nombre viene del link personalizado
+    paintGreeting();
+    fetch(PANEL_API + '?nombre=' + encodeURIComponent(urlPara) + '&url_boda=' + encodeURIComponent(RSVP_URL))
+      .then(r => r.json())
+      .then(resp => {
+        const d = resp && resp.invitado;
+        if (!d) {
+          // El server respondió pero esta invitación no existe (borrada del panel)
+          if (resp && resp.ok) invitacionNoDisponible();
+          return;
+        }
+        if (typeof d.pases === 'number' && d.pases > 0 && d.pases <= 20) {
+          pasesAsignados = d.pases;
+          paintGreeting();
+        }
+        if (d.estado === 'confirmado' || d.estado === 'declino') {
+          if (d.nombres_confirmados && d.nombres_confirmados.length) {
+            savedNames = d.nombres_confirmados.slice();
+          }
+          if (d.estado === 'declino' && d.mensaje) {
+            const rmsg = document.getElementById('rmsg');
+            if (rmsg) rmsg.value = d.mensaje;
+          }
+          selectRsvp(d.estado === 'confirmado' ? 'yes' : 'no', false);
+          rsvpActiveLabel = 'Actualizar respuesta';
+          applyRsvpDeadline();
+          showFeedback(d.estado === 'confirmado'
+            ? '¡Ya tienes confirmada tu asistencia! Puedes actualizar tu respuesta.'
+            : 'Ya registramos que no podrás asistir. Puedes cambiar tu respuesta.');
+          if (d.estado === 'confirmado') {
+            if (resp.qrs && resp.qrs.length) paintQrs(resp.qrs);
+            else showQrsPending();
+          }
+        }
+      })
+      .catch(() => {});
+  }
+
+  applyRsvpDeadline();
+
+  /* Fecha límite dinámica del panel: sobrescribe el fallback hardcodeado */
+  fetch(PANEL_API + '?solo_boda=1&url_boda=' + encodeURIComponent(RSVP_URL))
+    .then(r => r.json())
+    .then(resp => {
+      const b = resp && resp.boda;
+      if (!b || !b.fecha_limite_rsvp) return;
+      const nd = parseDeadline(b.fecha_limite_rsvp);
+      if (!nd) return;
+      rsvpDeadline = nd;
+      const dl = document.querySelector('.rsvp-dl');
+      if (dl) dl.textContent = fmtDeadline(nd);
+      applyRsvpDeadline();
+    })
+    .catch(() => {});
+})();
 
 function submitRSVP(e) {
   e.preventDefault();
-  const name = document.getElementById('rname').value.trim();
-  const att  = document.querySelector('input[name="att"]:checked');
+  if (Date.now() > rsvpDeadline.getTime()) return;
+  const rname  = document.getElementById('rname');
+  const nombre = urlPara || (rname ? rname.value.trim() : '');
 
-  if (!name) { toast('Escribe tu nombre'); return; }
-  if (!att)  { toast('Indica si asistirás'); return; }
+  if (!nombre) { toast('Escribe tu nombre'); return; }
+  if (!rsvpChoice) { toast('Indica si asistirás'); return; }
 
-  const msg = att.value === 'yes'
-    ? `¡Hola! Soy *${name}*.\n\n✅ *Confirmo mi asistencia* a la boda de Carlos & Victoria el 12 de Octubre de 2026.\n👥 Personas: *${guests}*`
-    : `¡Hola! Soy *${name}*.\n\n❌ Lamentablemente *no podré asistir* a la boda de Carlos & Victoria.\nLes deseo lo mejor 💕`;
+  const nombres = [];
+  if (rsvpChoice === 'yes') {
+    document.querySelectorAll('#rsvp-fields .finput').forEach(inp => {
+      const v = inp.value.trim();
+      if (v) nombres.push(v);
+    });
+    if (nombres.length === 0) { toast('Escribe al menos un nombre'); return; }
+  }
 
-  toast('Abriendo WhatsApp…');
-  setTimeout(() => window.open(`https://wa.me/${WA}?text=${encodeURIComponent(msg)}`, '_blank'), 600);
+  const btn = document.getElementById('rsvpConfirmBtn');
+  setBtnText('Enviando…');
+  btn.disabled = true;
+
+  fetch(PANEL_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      nombre: nombre,
+      url_boda: RSVP_URL,
+      estado: rsvpChoice === 'yes' ? 'confirmado' : 'declino',
+      pases: pasesAsignados,
+      pases_confirmados: rsvpChoice === 'yes' ? nombres.length : 0,
+      nombres_confirmados: nombres,
+      mensaje: rsvpChoice === 'no'
+        ? ((document.getElementById('rmsg') || {}).value || '').trim().slice(0, 500)
+        : undefined
+    })
+  })
+  .then(r => r.json().then(d => ({ status: r.status, d: d })))
+  .then(res => {
+    const d = res.d;
+    btn.disabled = false;
+    if (res.status === 403 && d && d.error === 'rsvp_cerrado') {
+      showFeedback('La fecha para confirmar asistencia ha pasado.');
+      freezeRsvp();
+      return;
+    }
+    if (res.status === 404 && d && (d.error === 'invitacion_no_disponible' || d.error === 'no_match')) {
+      invitacionNoDisponible();
+      return;
+    }
+    if (!d || !d.ok) {
+      setBtnText('Confirmar asistencia');
+      toast('No pudimos guardar. Intenta de nuevo.');
+      return;
+    }
+    rsvpActiveLabel = 'Actualizar respuesta';
+    setBtnText('Actualizar respuesta');
+    if (rsvpChoice === 'yes') {
+      showFeedback('¡Tu asistencia ha sido confirmada! Nos vemos pronto. ✦', '#8fd88a');
+      toast('Asistencia confirmada');
+      if (d.qrs && d.qrs.length) paintQrs(d.qrs);
+      else showQrsPending();
+      setTimeout(() => document.getElementById('qrSection').scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 350);
+    } else {
+      showFeedback('Hemos registrado que no podrás asistir. ¡Gracias por avisarnos!');
+      document.getElementById('qrSection').style.display = 'none';
+      toast('Respuesta registrada');
+    }
+  })
+  .catch(() => {
+    btn.disabled = false;
+    setBtnText('Confirmar asistencia');
+    toast('Error de conexión. Intenta de nuevo.');
+  });
+}
+
+/* ── QRs "Tus códigos de acceso" ─────────────────────── */
+function paintQrs(qrs) {
+  const sec = document.getElementById('qrSection');
+  const grid = document.getElementById('qrGrid');
+  if (!sec || !grid || typeof QRCode === 'undefined') return;
+  grid.innerHTML = '';
+  qrs.forEach(q => {
+    const card = document.createElement('div');
+    card.className = 'qr-card';
+
+    const box = document.createElement('div');
+    box.className = 'qr-img';
+    const cv = document.createElement('canvas');
+    box.appendChild(cv);
+    card.appendChild(box);
+    QRCode.toCanvas(cv, q.codigo, { width: 170, margin: 1, color: { dark: '#0A0908', light: '#FFFFFF' } }, function(){});
+
+    const nm = document.createElement('p');
+    nm.className = 'qr-name';
+    nm.textContent = q.nombre_persona;
+    card.appendChild(nm);
+
+    if (q.mesa) {
+      const ms = document.createElement('p');
+      ms.className = 'qr-mesa';
+      ms.textContent = 'Mesa ' + q.mesa;
+      card.appendChild(ms);
+    }
+
+    // Código en texto: respaldo por si el scanner falla en la entrada
+    // (se puede dictar y capturar manualmente en el panel)
+    const lbl = document.createElement('p');
+    lbl.className = 'qr-code-lbl';
+    lbl.textContent = 'Código de respaldo';
+    card.appendChild(lbl);
+    const ct = document.createElement('p');
+    ct.className = 'qr-code-txt';
+    ct.textContent = q.codigo;
+    card.appendChild(ct);
+
+    const dl = document.createElement('button');
+    dl.type = 'button';
+    dl.className = 'qr-dl';
+    dl.textContent = 'Descargar';
+    dl.addEventListener('click', function(){
+      QRCode.toDataURL(q.codigo, { width: 1024, margin: 2, color: { dark: '#0A0908', light: '#FFFFFF' } }, function(err, url){
+        if (err) return;
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'qr-' + q.nombre_persona.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '.png';
+        a.click();
+      });
+    });
+    card.appendChild(dl);
+
+    grid.appendChild(card);
+  });
+  sec.style.display = 'block';
 }
 
 /* ── COPY CLABE ──────────────────────────────────────── */
@@ -1146,6 +1451,34 @@ function toast(msg) {
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 3000);
 }
+</script>
+<script>
+/* ELYSIUM AUDIO UNLOCK v1 — la musica se estrena DENTRO del primer gesto real del invitado.
+   iOS/Chrome retiran el permiso del gesto a los pocos ms, asi que un play() que corre al
+   terminar el video del sobre llega tarde y es rechazado en silencio. */
+(function(){
+  if(window.__elyAudioUnlock) return; window.__elyAudioUnlock=1;
+  var done=false, tries=0;
+  function A(){ return document.querySelector('audio'); }
+  function unlock(){
+    if(done) return;
+    var a=A(); if(!a) return;
+    try{ if(a.preload==='none'){ a.preload='auto'; a.load(); } }catch(e){}
+    if(!a.paused){ done=true; return; }
+    var p;
+    try{ p=a.play(); }catch(e){ return; }
+    if(p && p.then){ p.then(function(){ done=true; }).catch(function(){}); }
+    else { done=true; }
+  }
+  ['pointerdown','touchstart','touchend','click','keydown'].forEach(function(ev){
+    document.addEventListener(ev, unlock, {capture:true, passive:true});
+  });
+  var iv=setInterval(function(){
+    var a=A();
+    if(done || (a && !a.paused)){ done=true; clearInterval(iv); return; }
+    if(++tries>120) clearInterval(iv);
+  },1000);
+})();
 </script>
 </body>
 </html>
